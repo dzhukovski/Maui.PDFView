@@ -1,10 +1,12 @@
 ﻿using System.Windows.Input;
+using Maui.PDFView.Helpers.DataSource;
 
 namespace Maui.PDFView
 {
     public interface IPdfView : IView
     {
-        string Uri { get; set; }
+        DataSource Source  { get; set; }
+        
         bool IsHorizontal { get; set; }
         float MaxZoom { get; set; }
         PageAppearance? PageAppearance { get; set; }

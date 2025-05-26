@@ -1,44 +1,39 @@
 ﻿using Foundation;
 using Maui.PDFView.Events;
 using Maui.PDFView.Helpers;
+using Maui.PDFView.Helpers.DataSource;
 using Microsoft.Maui.Handlers;
 using PdfKit;
 using UIKit;
 
 namespace Maui.PDFView.Platforms.MacCatalyst
 {
-    internal class PdfViewHandler : ViewHandler<IPdfView, PdfKit.PdfView>
+    internal class PdfViewHandler() : ViewHandler<IPdfView, PdfKit.PdfView>(PropertyMapper)
     {
-        private readonly static PropertyMapper<PdfView, PdfViewHandler> PropertyMapper = new(ViewMapper)
+        public static readonly PropertyMapper<PdfView, PdfViewHandler> PropertyMapper = new(ViewMapper)
         {
-            [nameof(IPdfView.Uri)] = MapUri,
+            [nameof(IPdfView.Source)] = MapUri,
             [nameof(IPdfView.IsHorizontal)] = MapIsHorizontal,
             [nameof(IPdfView.MaxZoom)] = MapMaxZoom,
             [nameof(IPdfView.PageAppearance)] = MapPageAppearance,
             [nameof(IPdfView.PageIndex)] = MapPageIndex,
         };
 
-        private string _fileName;
-        private PageAppearance _appearance = new();
         private readonly DesiredSizeHelper _sizeHelper = new();
-        
+        private string? _fileName;
+        private PageAppearance _appearance = new();
         private bool _isScrolling;
-
-        public PdfViewHandler() : base(PropertyMapper, null)
-        {
-        }
 
         static void MapUri(PdfViewHandler handler, IPdfView pdfView)
         {
-            handler._fileName = pdfView.Uri;
-            handler.RenderPages();
+            pdfView.LoadToFile(finished: handler.RenderPages);
         }
 
         static void MapIsHorizontal(PdfViewHandler handler, IPdfView pdfView)
         {
             handler.PlatformView.DisplayDirection = pdfView.IsHorizontal
-                                        ? PdfDisplayDirection.Horizontal
-                                        : PdfDisplayDirection.Vertical;
+                ? PdfDisplayDirection.Horizontal
+                : PdfDisplayDirection.Vertical;
         }
 
         static void MapMaxZoom(PdfViewHandler handler, IPdfView pdfView)
@@ -51,7 +46,6 @@ namespace Maui.PDFView.Platforms.MacCatalyst
         {
             var appearance = pdfView.PageAppearance ?? new PageAppearance();
             handler._appearance = appearance;
-
             SetPageAppearance(handler, appearance);
         }
 
@@ -104,7 +98,13 @@ namespace Maui.PDFView.Platforms.MacCatalyst
             NSNotificationCenter.DefaultCenter.RemoveObserver(PlatformView);
             base.DisconnectHandler(platformView);
         }
-
+        
+        private void RenderPages(string fileName)
+        {
+            _fileName = fileName;
+            RenderPages();
+        }
+        
         private void RenderPages()
         {
             if (_fileName == null)

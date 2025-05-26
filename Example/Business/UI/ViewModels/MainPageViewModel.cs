@@ -1,15 +1,18 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Example.Business.Services;
 using Maui.PDFView.Events;
 using System.Diagnostics;
-using System.Windows.Input;
+using Example.Business.Collections;
 
 namespace Example.Business.UI.ViewModels
 {
     internal partial class MainPageViewModel : ObservableObject
     {
-        private readonly IRepositoryService _repository = new RepositoryService();
+        private readonly LoopedList<string> _pdfs = new(
+            "PDF/pdf1.pdf",
+            "PDF/pdf2.pdf",
+            "https://www.orimi.com/pdf-test.pdf"
+        );
 
         [ObservableProperty] private string _pdfSource;
         [ObservableProperty] private bool _isHorizontal;
@@ -25,7 +28,7 @@ namespace Example.Business.UI.ViewModels
 
         [RelayCommand] private void ChangeUri()
         {
-            PdfSource = _repository.GetPdfSource();
+            PdfSource = _pdfs.Next();
         }
 
         [RelayCommand] private void PageChanged(PageChangedEventArgs args)
@@ -34,6 +37,5 @@ namespace Example.Business.UI.ViewModels
             PagePosition = $"{args.CurrentPage} of {args.TotalPages}";
             Debug.WriteLine($"Current page: {args.CurrentPage} of {args.TotalPages}");
         }
-
     }
 }
