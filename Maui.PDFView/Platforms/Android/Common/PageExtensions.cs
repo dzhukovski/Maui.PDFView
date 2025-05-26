@@ -1,5 +1,9 @@
 using Android.Graphics;
 using Android.Graphics.Pdf;
+using Java.IO;
+using Maui.PDFView.Helpers.DataSource;
+using File = System.IO.File;
+using Path = System.IO.Path;
 
 namespace Maui.PDFView.Platforms.Android.Common;
 

@@ -7,7 +7,7 @@
             builder.ConfigureMauiHandlers((handlers) =>
             {
 #if ANDROID
-                handlers.AddHandler(typeof(PdfView), typeof(Platforms.Android.PdfViewHandler));
+                handlers.AddHandler(typeof(PdfView), typeof(Platforms.Droid.PdfViewHandler));
 #elif IOS
                 handlers.AddHandler(typeof(PdfView), typeof(Platforms.iOS.PdfViewHandler));
 #elif MACCATALYST

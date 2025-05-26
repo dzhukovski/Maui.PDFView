@@ -1,50 +1,58 @@
 ﻿using System.Windows.Input;
+using Maui.PDFView.Helpers.DataSource;
 
 namespace Maui.PDFView
 {
     public class PdfView : View, IPdfView
     {
-        public static readonly BindableProperty UriProperty = BindableProperty.Create(
-                propertyName: nameof(Uri),
-                returnType: typeof(string),
-                declaringType: typeof(PdfView),
-                defaultValue: default(string));
+        public static readonly BindableProperty SourceProperty = BindableProperty.Create(
+            nameof(Source),
+            typeof(DataSource),
+            typeof(PdfView)
+        );
 
         public static readonly BindableProperty IsHorizontalProperty = BindableProperty.Create(
-                propertyName: nameof(IsHorizontal),
-                returnType: typeof(bool),
-                declaringType: typeof(PdfView),
-                defaultValue: false);
+            propertyName: nameof(IsHorizontal),
+            returnType: typeof(bool),
+            declaringType: typeof(PdfView),
+            defaultValue: false
+        );
 
         public static readonly BindableProperty MaxZoomProperty = BindableProperty.Create(
-                propertyName: nameof(MaxZoom),
-                returnType: typeof(float),
-                declaringType: typeof(PdfView),
-                defaultValue: 4f,
-                propertyChanged: OnMaxZoomPropertyChanged);
+            propertyName: nameof(MaxZoom),
+            returnType: typeof(float),
+            declaringType: typeof(PdfView),
+            defaultValue: 4f,
+            propertyChanged: OnMaxZoomPropertyChanged
+        );
         
         public static readonly BindableProperty PageAppearanceProperty = BindableProperty.Create(
-                propertyName: nameof(PageAppearance),
-                returnType: typeof(PageAppearance), 
-                declaringType: typeof(PdfView),
-                defaultValue: null);
+            propertyName: nameof(PageAppearance),
+            returnType: typeof(PageAppearance), 
+            declaringType: typeof(PdfView),
+            defaultValue: null
+        );
 
         public static readonly BindableProperty PageChangedCommandProperty = BindableProperty.Create(
-                propertyName: nameof(PageChangedCommand),
-                returnType: typeof(ICommand),
-                declaringType: typeof(PdfView),
-                defaultValue: default(ICommand));
+            propertyName: nameof(PageChangedCommand),
+            returnType: typeof(ICommand),
+            declaringType: typeof(PdfView),
+            defaultValue: null
+        );
 
         public static readonly BindableProperty PageIndexProperty = BindableProperty.Create(
-                propertyName: nameof(PageIndex),
-                returnType: typeof(uint),
-                declaringType: typeof(PdfView),
-                defaultValue: (uint)0, defaultBindingMode: BindingMode.TwoWay);
+            propertyName: nameof(PageIndex),
+            returnType: typeof(uint),
+            declaringType: typeof(PdfView),
+            defaultValue: (uint)0,
+            defaultBindingMode: BindingMode.TwoWay
+        );
 
-        public string Uri
+        [System.ComponentModel.TypeConverter(typeof(DataSourceConverter))]
+        public DataSource Source
         {
-            get => (string)GetValue(UriProperty);
-            set => SetValue(UriProperty, value);
+            get => (DataSource)GetValue(SourceProperty);
+            set => SetValue(SourceProperty, value);
         }
 
         public bool IsHorizontal
@@ -80,7 +88,9 @@ namespace Maui.PDFView
         private static void OnMaxZoomPropertyChanged(BindableObject bindable, object oldValue, object newValue)
         {
             if ((float)newValue < 1f)
+            {
                 throw new ArgumentException("PdfView: MaxZoom cannot be less than 1");
+            }
         }
     }
 }

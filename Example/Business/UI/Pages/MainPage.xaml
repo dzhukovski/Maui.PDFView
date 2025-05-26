@@ -74,13 +74,12 @@
             </Grid>
         </ScrollView>
 
-
         <pdf:PdfView
             Grid.Row="1"
             IsHorizontal="{Binding IsHorizontal}"
             MaxZoom="{Binding MaxZoom}"
             PageChangedCommand="{Binding PageChangedCommand}"
-            Uri="{Binding PdfSource}"
+            Source="{Binding PdfSource}"
             PageIndex="{Binding PageIndex, Mode=TwoWay}" />
 
         <Label

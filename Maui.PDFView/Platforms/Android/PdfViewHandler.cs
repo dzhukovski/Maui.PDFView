@@ -6,15 +6,17 @@ using Android.Widget;
 using Android.Views;
 using Maui.PDFView.Events;
 using Maui.PDFView.Helpers;
+using Maui.PDFView.Helpers.DataSource;
+using Maui.PDFView.Platforms.Android;
 
-namespace Maui.PDFView.Platforms.Android
+namespace Maui.PDFView.Platforms.Droid
 {
     [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
-    public class PdfViewHandler : ViewHandler<IPdfView, FrameLayout>
+    public class PdfViewHandler() : ViewHandler<IPdfView, FrameLayout>(PropertyMapper)
     {
         public static readonly PropertyMapper<PdfView, PdfViewHandler> PropertyMapper = new(ViewMapper)
         {
-            [nameof(IPdfView.Uri)] = MapUri,
+            [nameof(IPdfView.Source)] = MapUri,
             [nameof(IPdfView.IsHorizontal)] = MapIsHorizontal,
             [nameof(IPdfView.MaxZoom)] = MapMaxZoom,
             [nameof(IPdfView.PageAppearance)] = MapPageAppearance,
@@ -22,26 +24,36 @@ namespace Maui.PDFView.Platforms.Android
         };
 
         private readonly DesiredSizeHelper _sizeHelper = new();
-        private ZoomableRecyclerView _recycleView;
-        private string? _fileName;
+        private ZoomableRecyclerView? _recycleView;
         private PageAppearance? _pageAppearance;
-        
+        private string? _filePath;
         private bool _isScrolling;
         private bool _isPageIndexLocked;
 
-        public PdfViewHandler() : base(PropertyMapper, null)
-        {
-        }
-
         static void MapUri(PdfViewHandler handler, IPdfView pdfView)
         {
-            handler._fileName = pdfView.Uri;
-            handler.RenderPages();
+            pdfView.LoadToFile(finished: handler.RenderPages);
+        }
+        
+        /// <summary>
+        /// Changes the behavior of the component if the size of the selected area has been changed.
+        /// For example, when the screen is flipped or the screen is split.
+        /// The method creates an adapter for the RecyclerView, and pass it the
+        /// data set (the bitmap list) to manage.
+        /// </summary>
+        public override Size GetDesiredSize(double widthConstraint, double heightConstraint)
+        {
+            if (_sizeHelper.UpdateSize(widthConstraint, heightConstraint))
+            {
+                RenderPages();
+            }
+            
+            return base.GetDesiredSize(widthConstraint, heightConstraint);
         }
 
         static void MapIsHorizontal(PdfViewHandler handler, IPdfView pdfView)
         {
-            if (handler._recycleView.GetLayoutManager() is LinearLayoutManager layoutManager)
+            if (handler._recycleView?.GetLayoutManager() is LinearLayoutManager layoutManager)
             {
                 layoutManager.Orientation = pdfView.IsHorizontal
                     ? LinearLayoutManager.Horizontal
@@ -87,33 +99,21 @@ namespace Maui.PDFView.Platforms.Android
             return layout;
         }
 
-        /// <summary>
-        /// Changes the behavior of the component if the size of the selected area has been changed.
-        /// For example, when the screen is flipped or the screen is split.
-        /// The method creates an adapter for the RecyclerView, and pass it the
-        /// data set (the bitmap list) to manage.
-        /// </summary>
-        /// <param name="widthConstraint"></param>
-        /// <param name="heightConstraint"></param>
-        public override Size GetDesiredSize(double widthConstraint, double heightConstraint)
+        private void RenderPages(string fileName)
         {
-            if (_sizeHelper.UpdateSize(widthConstraint, heightConstraint))
-            {
-                RenderPages();
-            }
-            
-            return base.GetDesiredSize(widthConstraint, heightConstraint);
+            _filePath = fileName;
+            RenderPages();
         }
-
+        
         void RenderPages()
         {
             var page = _pageAppearance ?? new PageAppearance();
-            _recycleView.SetAdapter(
+            _recycleView?.SetAdapter(
                 new PdfBitmapAdapter(
                     new PdfAsBitmaps(
-                        _fileName,
+                        _filePath,
                         new ScreenHelper(
-                            global::Android.App.Application.Context,
+                            Context,
                             !VirtualView.IsHorizontal
                         ).Invalidate(),
                         page.Crop
@@ -125,8 +125,10 @@ namespace Maui.PDFView.Platforms.Android
 
         private void GotoPage(uint pageIndex)
         {
-            if (_isScrolling)
+            if (_isScrolling || _recycleView == null)
+            {
                 return;
+            }
 
             var layoutManager = (LinearLayoutManager)_recycleView.GetLayoutManager()!;
             if (pageIndex >= layoutManager.ItemCount)
@@ -138,13 +140,13 @@ namespace Maui.PDFView.Platforms.Android
             layoutManager.ScrollToPositionWithOffset((int)pageIndex,1);
         }
 
-        public class PdfScrollListener(PdfViewHandler handler) : RecyclerView.OnScrollListener
+        private class PdfScrollListener(PdfViewHandler handler) : RecyclerView.OnScrollListener
         {
             public override void OnScrolled(RecyclerView recyclerView, int dx, int dy)
             {
                 base.OnScrolled(recyclerView, dx, dy);
 
-                var layoutManager = (LinearLayoutManager)recyclerView.GetLayoutManager();
+                var layoutManager = (LinearLayoutManager?)recyclerView.GetLayoutManager();
                 int firstVisibleItemPosition = layoutManager.FindFirstVisibleItemPosition();
                 int lastVisibleItemPosition = layoutManager.FindLastVisibleItemPosition();
 
