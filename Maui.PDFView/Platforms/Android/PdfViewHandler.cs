@@ -14,7 +14,7 @@ namespace Maui.PDFView.Platforms.Droid
     [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
     public class PdfViewHandler() : ViewHandler<IPdfView, FrameLayout>(PropertyMapper)
     {
-        public static readonly PropertyMapper<PdfView, PdfViewHandler> PropertyMapper = new(ViewMapper)
+        public static readonly PropertyMapper<IPdfView, PdfViewHandler> PropertyMapper = new(ViewMapper)
         {
             [nameof(IPdfView.Source)] = MapUri,
             [nameof(IPdfView.IsHorizontal)] = MapIsHorizontal,
