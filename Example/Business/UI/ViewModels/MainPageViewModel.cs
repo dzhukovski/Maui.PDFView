@@ -11,7 +11,8 @@ namespace Example.Business.UI.ViewModels
         private readonly LoopedList<string> _pdfs = new(
             "PDF/pdf1.pdf",
             "PDF/pdf2.pdf",
-            "https://www.orimi.com/pdf-test.pdf"
+            "https://www.orimi.com/pdf-test.pdf",
+            "file:///sdcard/Download/Agreement Prolongation Instruction - TR_05 Oct 2023.pdf"
         );
 
         [ObservableProperty] private string _pdfSource;

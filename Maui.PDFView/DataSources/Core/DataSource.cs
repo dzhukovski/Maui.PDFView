@@ -5,14 +5,16 @@ namespace Maui.PDFView.Helpers.DataSource;
 [System.ComponentModel.TypeConverter(typeof(DataSourceConverter))]
 public abstract partial class DataSource : Element, IDataSource
 {
+	public static readonly BindableProperty LoadingErrorProperty = BindableProperty.Create(
+		nameof(LoadingError),
+		typeof(Exception),
+		typeof(DataSource)
+	);
+	
 	private readonly object _synchandle = new object();
 	private readonly WeakEventManager _weakEventManager = new WeakEventManager();
 	private CancellationTokenSource? _cancellationTokenSource;
 	private TaskCompletionSource<bool>? _completionSource;
-
-	protected DataSource()
-	{
-	}
 
 	internal event EventHandler SourceChanged
 	{
@@ -20,9 +22,13 @@ public abstract partial class DataSource : Element, IDataSource
 		remove => _weakEventManager.RemoveEventHandler(value);
 	}
 
+	public Exception? LoadingError
+	{
+		get => (Exception?)GetValue(LoadingErrorProperty);
+		set => SetValue(LoadingErrorProperty, value);
+	}
+	
 	public virtual bool IsEmpty => false;
-
-	public abstract Task<Stream?> StreamAsync(CancellationToken cancellationToken = default);
 
 	private protected CancellationTokenSource? CancellationTokenSource
 	{
@@ -46,6 +52,8 @@ public abstract partial class DataSource : Element, IDataSource
 	bool IsLoading => _cancellationTokenSource != null;
 
 	public static bool IsNullOrEmpty(IDataSource? dataSource) => dataSource == null || dataSource.IsEmpty;
+
+	public abstract Task<Stream?> StreamAsync(CancellationToken cancellationToken = default);
 	
 	public virtual Task<bool> Cancel()
 	{

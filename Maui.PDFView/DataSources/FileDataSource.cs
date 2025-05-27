@@ -19,19 +19,21 @@ public sealed partial class FileDataSource : DataSource, IFileDataSource
         set => SetValue(FileProperty, value);
     }
     
-    public override Task<Stream?> StreamAsync(CancellationToken cancellationToken = default)
+    public override async Task<Stream?> StreamAsync(CancellationToken cancellationToken = default)
     {
         if (IsEmpty)
         {
-            return Task.FromResult<Stream?>(null);
+            return null;
         }
         
-        if (Path.IsPathFullyQualified(File))
+        if (Path.IsPathFullyQualified(File) || File.Contains("file://"))
         {
-            return Task.FromResult<Stream?>(System.IO.File.Open(File, FileMode.Open));
+            await ExternalStorageReadPermissionGrantedAsync();
+            var file = File.Replace("file://", string.Empty);
+            return System.IO.File.OpenRead(file);
         }
 
-        return LoadAsMauiAssetAsync();
+        return await LoadAsMauiAssetAsync();
     }
 
     public override Task<bool> Cancel()
@@ -61,5 +63,12 @@ public sealed partial class FileDataSource : DataSource, IFileDataSource
             OnSourceChanged();
         }
         base.OnPropertyChanged(propertyName);
+    }
+    
+    private async Task<bool> ExternalStorageReadPermissionGrantedAsync()
+    {
+        return await MainThread
+            .InvokeOnMainThreadAsync(Permissions.RequestAsync<Permissions.StorageRead>)
+            .ConfigureAwait(false) == PermissionStatus.Granted;
     }
 }

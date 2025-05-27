@@ -76,6 +76,7 @@
 
         <pdf:PdfView
             Grid.Row="1"
+            x:Name="PdfView"
             IsHorizontal="{Binding IsHorizontal}"
             MaxZoom="{Binding MaxZoom}"
             PageChangedCommand="{Binding PageChangedCommand}"
@@ -89,6 +90,20 @@
             Text="{Binding Mode=OneWay, Path=PagePosition}"
             TextColor="Black"
             VerticalOptions="Start" />
+        
+        <Label
+            Grid.Row="1"
+            Text="{Binding Source.LoadingError, Source={x:Reference PdfView}}"
+            TextColor="Black"
+            VerticalOptions="Center" />
+        <ActivityIndicator 
+            Grid.RowSpan="2"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            WidthRequest="50"
+            HeightRequest="50"
+            IsVisible="{Binding IsLoading, Source={x:Reference PdfView}}" 
+            IsRunning="{Binding IsLoading, Source={x:Reference PdfView}}"/>
     </Grid>
 
 </ContentPage>

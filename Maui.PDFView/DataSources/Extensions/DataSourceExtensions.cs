@@ -2,24 +2,17 @@ namespace Maui.PDFView.Helpers.DataSource;
 
 public static class DataSourceExtensions
 {
-    public static void LoadToFile(
-        this IPdfView pdfView,
-        CancellationToken cancellationToken = default,
-        Action<string>? finished = null,
-        Action<Exception>? error = null)
-    {
-        pdfView.Source.LoadToFile(cancellationToken, finished, error);
-    }
-    
     public static async void LoadToFile(
-        this IDataSource source,
+        this IPdfView pdfView,
         CancellationToken cancellationToken = default,
         Action<string>? finished = null,
         Action<Exception>? error = null)
     {
         try
         {
-            await using var stream = await source.StreamAsync(cancellationToken);
+            pdfView.Source.LoadingError = null;
+            pdfView.IsLoading = true;
+            await using var stream = await pdfView.Source.StreamAsync(cancellationToken);
             if (stream != null)
             {
                 var fileName = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
@@ -33,7 +26,12 @@ public static class DataSourceExtensions
         }
         catch (Exception e)
         {
+            pdfView.Source.LoadingError = e;
             error?.Invoke(e);
+        }
+        finally
+        {
+            pdfView.IsLoading = false;
         }
     }
 }

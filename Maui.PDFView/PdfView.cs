@@ -17,6 +17,13 @@ namespace Maui.PDFView
             declaringType: typeof(PdfView),
             defaultValue: false
         );
+        
+        public static readonly BindableProperty IsLoadingProperty = BindableProperty.Create(
+            propertyName: nameof(IsLoading),
+            returnType: typeof(bool),
+            declaringType: typeof(PdfView),
+            defaultValue: false
+        );
 
         public static readonly BindableProperty MaxZoomProperty = BindableProperty.Create(
             propertyName: nameof(MaxZoom),
@@ -47,6 +54,8 @@ namespace Maui.PDFView
             defaultValue: (uint)0,
             defaultBindingMode: BindingMode.TwoWay
         );
+        
+        public event Action<Exception> LoadingFailed;
 
         [System.ComponentModel.TypeConverter(typeof(DataSourceConverter))]
         public DataSource Source
@@ -54,11 +63,17 @@ namespace Maui.PDFView
             get => (DataSource)GetValue(SourceProperty);
             set => SetValue(SourceProperty, value);
         }
-
+        
         public bool IsHorizontal
         {
             get => (bool)GetValue(IsHorizontalProperty);
             set => SetValue(IsHorizontalProperty, value);
+        }
+        
+        public bool IsLoading
+        {
+            get => (bool)GetValue(IsLoadingProperty);
+            set => SetValue(IsLoadingProperty, value);
         }
 
         public float MaxZoom
@@ -85,6 +100,11 @@ namespace Maui.PDFView
             set => SetValue(PageIndexProperty, value);
         }
 
+        internal void OnLoadingFailed(Exception exception)
+        {
+            LoadingFailed?.Invoke(exception);
+        }
+        
         private static void OnMaxZoomPropertyChanged(BindableObject bindable, object oldValue, object newValue)
         {
             if ((float)newValue < 1f)
