@@ -11,7 +11,7 @@ public abstract partial class DataSource : Element, IDataSource
 		typeof(DataSource)
 	);
 	
-	private readonly object _synchandle = new object();
+	private readonly object _syncHandle = new object();
 	private readonly WeakEventManager _weakEventManager = new WeakEventManager();
 	private CancellationTokenSource? _cancellationTokenSource;
 	private TaskCompletionSource<bool>? _completionSource;
@@ -35,25 +35,41 @@ public abstract partial class DataSource : Element, IDataSource
 		get => _cancellationTokenSource;
 		private set
 		{
-			if (_cancellationTokenSource == value)
+			if (_cancellationTokenSource != value)
 			{
-				return;
+				_cancellationTokenSource?.Cancel();
+				_cancellationTokenSource = value;
 			}
-
-			if (_cancellationTokenSource != null)
-			{
-				_cancellationTokenSource.Cancel();
-			}
-
-			_cancellationTokenSource = value;
 		}
 	}
 
 	bool IsLoading => _cancellationTokenSource != null;
 
-	public static bool IsNullOrEmpty(IDataSource? dataSource) => dataSource == null || dataSource.IsEmpty;
+	public async Task<Stream?> StreamAsync(CancellationToken cancellationToken = default)
+	{
+		if (IsEmpty)
+		{
+			return null;
+		}
 
-	public abstract Task<Stream?> StreamAsync(CancellationToken cancellationToken = default);
+		OnLoadingStarted();
+		if (CancellationTokenSource != null)
+		{
+			cancellationToken.Register(CancellationTokenSource.Cancel);
+		}
+		
+		try
+		{
+			var stream = await StreamImplAsync(CancellationTokenSource?.Token ?? CancellationToken.None);
+			OnLoadingCompleted(false);
+			return stream;
+		}
+		catch (OperationCanceledException)
+		{
+			OnLoadingCompleted(true);
+			throw;
+		}
+	}
 	
 	public virtual Task<bool> Cancel()
 	{
@@ -133,6 +149,8 @@ public abstract partial class DataSource : Element, IDataSource
 		}
 		return FromUri(uri);
 	}
+	
+	protected abstract Task<Stream?> StreamImplAsync(CancellationToken cancellationToken = default);
 
 	private protected void OnLoadingCompleted(bool cancelled)
 	{
@@ -145,7 +163,7 @@ public abstract partial class DataSource : Element, IDataSource
 			tcs.SetResult(cancelled);
 		}
 
-		lock (_synchandle)
+		lock (_syncHandle)
 		{
 			CancellationTokenSource = null;
 		}
@@ -153,7 +171,7 @@ public abstract partial class DataSource : Element, IDataSource
 
 	private protected void OnLoadingStarted()
 	{
-		lock (_synchandle)
+		lock (_syncHandle)
 		{
 			CancellationTokenSource = new CancellationTokenSource();
 		}

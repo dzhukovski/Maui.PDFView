@@ -41,17 +41,17 @@ namespace Maui.PDFView.Platforms.Android
 
         public Bitmap PageBitmap(PdfRenderer.Page page)
         {
-            var widthAndHeight = ImageWidthAndHeight(page);
+            var size = ImageSize(page);
             //  If you need to apply a color to the page
             //bitmap.EraseColor(Color.White);
             return Bitmap.CreateBitmap(
-                widthAndHeight.Width,
-                widthAndHeight.Height,
+                size.Width,
+                size.Height,
                 Bitmap.Config.Argb8888
             );
         }
 
-        private (int Width, int Height) ImageWidthAndHeight(PdfRenderer.Page page)
+        private (int Width, int Height) ImageSize(PdfRenderer.Page page)
         {
             int width;
             int height;

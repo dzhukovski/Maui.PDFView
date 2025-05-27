@@ -133,7 +133,7 @@ namespace Maui.PDFView.Platforms.Droid
         
         void RenderPages(string? filePath)
         {
-            var page = _pageAppearance ?? new PageAppearance();
+            var appearance = _pageAppearance ?? new PageAppearance();
             _recycleView?.SetAdapter(
                 new PdfBitmapAdapter(
                     new PdfAsBitmaps(
@@ -142,9 +142,9 @@ namespace Maui.PDFView.Platforms.Droid
                             Context,
                             !VirtualView.IsHorizontal
                         ).Invalidate(),
-                        page.Crop
+                        appearance.Crop
                     ),
-                    page
+                    appearance
                 )
             );
         }

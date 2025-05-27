@@ -31,7 +31,6 @@ namespace Maui.PDFView.Platforms.Android.Common
         {
             _scaleDetector = new ScaleGestureDetector(context, this);
             _gestureDetector = new GestureDetectorCompat(context, new GestureListener(this));
-            SetLayoutManager(new ZoomableLinearLayoutManager(context, LinearLayoutManager.Vertical, false));
         }
 
         public bool IsZoomEnabled { get; set; } = true;

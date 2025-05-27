@@ -2,6 +2,8 @@ namespace Maui.PDFView.Helpers.DataSource;
 
 public static class DataSourceExtensions
 {
+    public static bool IsNullOrEmpty(this IDataSource? dataSource) => dataSource == null || dataSource.IsEmpty;
+    
     public static async void LoadToFile(
         this IPdfView pdfView,
         CancellationToken cancellationToken = default,
