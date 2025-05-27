@@ -112,7 +112,7 @@ public sealed partial class UriDataSource : DataSource, IUriDataSource
 		catch (Exception ex)
 		{
 			Logger()?.LogWarning(ex, "Error getting stream for {Uri}", Uri);
-			return null;
+			throw;
 		}
 	}
 	

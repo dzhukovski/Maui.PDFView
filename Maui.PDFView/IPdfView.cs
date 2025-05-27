@@ -7,6 +7,8 @@ namespace Maui.PDFView
     {
         DataSource Source  { get; set; }
         
+        bool IsLoading { get; internal set; }
+        
         bool IsHorizontal { get; set; }
         float MaxZoom { get; set; }
         PageAppearance? PageAppearance { get; set; }

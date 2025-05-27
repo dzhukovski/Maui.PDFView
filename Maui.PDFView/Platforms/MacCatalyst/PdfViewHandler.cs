@@ -26,7 +26,13 @@ namespace Maui.PDFView.Platforms.MacCatalyst
 
         static void MapUri(PdfViewHandler handler, IPdfView pdfView)
         {
-            pdfView.LoadToFile(finished: handler.RenderPages);
+            pdfView.LoadToFile(finished: handler.RenderPages, error: exception =>
+            {
+                if (pdfView is PdfView view)
+                {
+                    view.OnLoadingFailed(exception);
+                }
+            });
         }
 
         static void MapIsHorizontal(PdfViewHandler handler, IPdfView pdfView)

@@ -32,7 +32,14 @@ namespace Maui.PDFView.Platforms.Droid
 
         static void MapUri(PdfViewHandler handler, IPdfView pdfView)
         {
-            pdfView.LoadToFile(finished: handler.RenderPages);
+            handler.Clear();
+            pdfView.LoadToFile(finished: handler.OnPdfLoaded, error: exception =>
+            {
+                if (pdfView is PdfView view)
+                {
+                    view.OnLoadingFailed(exception);
+                }
+            });
         }
         
         /// <summary>
@@ -45,7 +52,7 @@ namespace Maui.PDFView.Platforms.Droid
         {
             if (_sizeHelper.UpdateSize(widthConstraint, heightConstraint))
             {
-                RenderPages();
+                RenderPages(_filePath);
             }
             
             return base.GetDesiredSize(widthConstraint, heightConstraint);
@@ -99,19 +106,38 @@ namespace Maui.PDFView.Platforms.Droid
             return layout;
         }
 
-        private void RenderPages(string fileName)
+        protected override void DisconnectHandler(FrameLayout platformView)
+        {
+            base.DisconnectHandler(platformView);
+            Clear();
+        }
+
+        private void OnPdfLoaded(string fileName)
         {
             _filePath = fileName;
-            RenderPages();
+            RenderPages(fileName);
+        }
+
+        private void Clear()
+        {
+            if (!string.IsNullOrEmpty(_filePath))
+            {
+                if (_filePath.Contains(Path.GetTempPath()))
+                {
+                    File.Delete(_filePath);
+                }
+                
+                OnPdfLoaded(string.Empty);
+            }
         }
         
-        void RenderPages()
+        void RenderPages(string? filePath)
         {
             var page = _pageAppearance ?? new PageAppearance();
             _recycleView?.SetAdapter(
                 new PdfBitmapAdapter(
                     new PdfAsBitmaps(
-                        _filePath,
+                        filePath,
                         new ScreenHelper(
                             Context,
                             !VirtualView.IsHorizontal
