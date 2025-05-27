@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using UriTypeConverter = Microsoft.Maui.Controls.UriTypeConverter;
 
 namespace Maui.PDFView.Helpers.DataSource;
@@ -27,6 +26,10 @@ public sealed partial class UriDataSource : DataSource, IUriDataSource
 		typeof(UriDataSource),
 		true
 	);
+
+	public static Func<HttpClient> HttpClientFactory = () => new HttpClient(
+		new HttpClientHandler { ServerCertificateCustomValidationCallback = (_, _, _, _) => true }
+	);
 	
 	public override bool IsEmpty => Uri == null;
 
@@ -54,47 +57,22 @@ public sealed partial class UriDataSource : DataSource, IUriDataSource
 		return Uri?.ToString() ?? String.Empty;
 	}
 	
-	public override async Task<Stream?> StreamAsync(CancellationToken cancellationToken = default)
+	protected override async Task<Stream?> StreamImplAsync(CancellationToken cancellationToken = default)
 	{
 		if (IsEmpty)
 		{
 			return null;
 		}
-
-		OnLoadingStarted();
-		if (CancellationTokenSource != null)
-		{
-			cancellationToken.Register(CancellationTokenSource.Cancel);
-		}
 		
-		try
-		{
-			var stream = await StreamAsync(Uri!, CancellationTokenSource?.Token ?? CancellationToken.None);
-			OnLoadingCompleted(false);
-			return stream;
-		}
-		catch (OperationCanceledException)
-		{
-			OnLoadingCompleted(true);
-			throw;
-		}
-		catch (Exception ex)
-		{
-			Logger()?.LogWarning(ex, "Error getting stream for {Uri}", Uri);
-			throw;
-		}
-	}
-	async Task<Stream?> StreamAsync(Uri uri, CancellationToken cancellationToken = default)
-	{
 		cancellationToken.ThrowIfCancellationRequested();
 		Stream? stream = null;
 		if (CachingEnabled)
 		{
-			stream ??= await DownloadStreamAsync(uri, cancellationToken).ConfigureAwait(false);
+			stream ??= await DownloadStreamAsync(Uri!, cancellationToken).ConfigureAwait(false);
 		}
 		else
 		{
-			stream = await DownloadStreamAsync(uri, cancellationToken).ConfigureAwait(false);
+			stream = await DownloadStreamAsync(Uri!, cancellationToken).ConfigureAwait(false);
 		}
 
 		return stream;
@@ -102,18 +80,10 @@ public sealed partial class UriDataSource : DataSource, IUriDataSource
 
 	async Task<Stream?> DownloadStreamAsync(Uri uri, CancellationToken cancellationToken)
 	{
-		try
-		{
-			using var client = new HttpClient(new HttpClientHandler { ServerCertificateCustomValidationCallback = (_, _, _, _) => true });
-			return await StreamWrapper
-				.GetStreamAsync(uri, cancellationToken, client)
-				.ConfigureAwait(false);
-		}
-		catch (Exception ex)
-		{
-			Logger()?.LogWarning(ex, "Error getting stream for {Uri}", Uri);
-			throw;
-		}
+		using var client = HttpClientFactory();
+		return await StreamWrapper
+			.GetStreamAsync(uri, cancellationToken, client)
+			.ConfigureAwait(false);
 	}
 	
 	private void OnUriChanged()
@@ -121,10 +91,4 @@ public sealed partial class UriDataSource : DataSource, IUriDataSource
 		CancellationTokenSource?.Cancel();
 		OnSourceChanged();
 	}
-	
-	private ILogger? Logger(IMauiContext? context = null)
-	{
-		context ??= Application.Current?.FindMauiContext();
-		return context?.CreateLogger<UriDataSource>();
-	} 
 }

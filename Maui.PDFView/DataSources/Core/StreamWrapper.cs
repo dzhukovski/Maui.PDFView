@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging;
-
 namespace Maui.PDFView.Helpers.DataSource;
 
 internal class StreamWrapper(Stream wrapped, IDisposable? additionalDisposable = null) : Stream
@@ -61,16 +59,8 @@ internal class StreamWrapper(Stream wrapped, IDisposable? additionalDisposable =
 	public static async Task<Stream?> GetStreamAsync(Uri uri, CancellationToken cancellationToken, HttpClient client)
 	{
 		var response = await client.GetAsync(uri, cancellationToken).ConfigureAwait(false);
-		if (!response.IsSuccessStatusCode)
-		{
-			Application.Current?
-				.FindMauiContext()?
-				.CreateLogger<StreamWrapper>()?
-				.LogWarning("Could not retrieve {Uri}, status code {StatusCode}", uri, response.StatusCode);
-
-			return null;
-		}
-
+		response.EnsureSuccessStatusCode();
+		
 		// the HttpResponseMessage needs to be disposed of after the calling code is done with the stream
 		// otherwise the stream may get disposed before the caller can use it
 		return new StreamWrapper(

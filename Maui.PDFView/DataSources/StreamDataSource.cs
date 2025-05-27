@@ -17,35 +17,20 @@ public partial class StreamDataSource : DataSource
         set => SetValue(StreamProperty, value);
     }
 
-    public override async Task<Stream?> StreamAsync(CancellationToken cancellationToken = default)
+    protected override async Task<Stream?> StreamImplAsync(CancellationToken cancellationToken = default)
     {
         if (IsEmpty)
         {
             return null;
         }
 
-        OnLoadingStarted();
-        if (CancellationTokenSource != null)
+        Stream? stream = null;
+        if (Stream != null)
         {
-            cancellationToken.Register(CancellationTokenSource.Cancel);
+            stream = await Stream(CancellationTokenSource?.Token ?? CancellationToken.None);
         }
-       
-        try
-        {
-            Stream? stream = null;
-            if (Stream != null)
-            {
-                stream = await Stream(CancellationTokenSource?.Token ?? CancellationToken.None);
-            }
-            
-            OnLoadingCompleted(false);
-            return stream;
-        }
-        catch (OperationCanceledException)
-        {
-            OnLoadingCompleted(true);
-            throw;
-        }
+
+        return stream;
     }
     
     protected override void OnPropertyChanged(string? propertyName = null)
